@@ -1,22 +1,20 @@
 import streamlit as st
 
-def cadastro_usuario(nome, senha):
-    return
+# validação
 def validar(nome, senha):
-    if nome=="" or senha=="":
+    if nome.strip() == "" or senha.strip() == "":
         return False
     return True
 
-with st.form("cadusuario:"):
-    st.title("Cadastro de usuários")
-    nome    = st.text_input("Nome: ")
-    senha   = st.text_input("Senha: ", type="password")
-    submit  = st.form_submit_button("Enviar")
-    
-if submit and validar(nome, senha):
-    cadastro_usuario(nome, senha)
-    st.success("Inserido com sucesso")
-elif submit:
-    st.warning("Dados inválidos")
+st.title("Cadastro de Usuários")
 
-st.write(st.secrets["db_username"])
+with st.form("cadusuario"):
+    nome  = st.text_input("Nome:")
+    senha = st.text_input("Senha:", type="password")
+    submit = st.form_submit_button("Enviar")
+
+if submit:
+    if validar(nome, senha):
+        st.success("Usuário inserido com sucesso!")
+    else:
+        st.warning("Por favor, preencha todos os campos corretamente.")
