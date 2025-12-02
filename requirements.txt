@@ -2,3 +2,6 @@ streamlit
 pandas
 numpy
 mysql.connector.python
+scikit-learn
+openai
+pymongo==4.7.2

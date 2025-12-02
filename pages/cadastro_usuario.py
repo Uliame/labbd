@@ -1,5 +1,12 @@
 import streamlit as st
 
+# ----------------------------
+# Botão voltar para a home
+# ----------------------------
+if st.button("Voltar para a Home"):
+    st.switch_page("app.py")
+
+
 # validação
 def validar(nome, senha):
     if nome.strip() == "" or senha.strip() == "":
@@ -18,3 +25,4 @@ if submit:
         st.success("Usuário inserido com sucesso!")
     else:
         st.warning("Por favor, preencha todos os campos corretamente.")
+

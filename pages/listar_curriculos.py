@@ -1,32 +1,60 @@
 import streamlit as st
 import pandas as pd
-import os
+from connection_mongo import curriculos
+from bson import ObjectId
 
-def listar_curriculos(caminho_arquivo):
-    """
-    Lê o arquivo CSV de currículos a partir de um caminho fixo e o exibe.
-    """
-    st.header("Lista de Currículos")
+# ----------------------------
+# Botão voltar para a home
+# ----------------------------
+if st.button("Voltar para a Home"):
+    st.switch_page("app.py")
+
+
+st.title("Lista de Currículos Cadastrados")
+
+# ---------------------------
+# LISTA OS CURRÍCULOS DO BANCO
+# ---------------------------
+try:
+    documentos = list(curriculos.find())
+except Exception as e:
+    st.error(f"Erro ao buscar currículos: {e}")
+    st.stop()
+
+if not documentos:
+    st.info("Nenhum currículo encontrado no banco.")
+    st.stop()
+
+# Criar DataFrame
+df = pd.DataFrame(documentos)
+
+# Mostrar tabela com o ID visível
+df["_id"] = df["_id"].astype(str)
+st.dataframe(df)
+
+st.divider()
+
+# ---------------------------
+# ÁREA DE EXCLUSÃO
+# ---------------------------
+
+st.subheader("Excluir Currículo")
+
+opcoes = {
+    f"{d['nome']} - {d['email']} ({d['_id']})": d["_id"]
+    for d in documentos
+}
+
+escolhido = st.selectbox(
+    "Selecione o currículo que deseja excluir:",
+    list(opcoes.keys())
+)
+
+if st.button("Apagar currículo"):
     try:
-        # Verifica se o arquivo existe no caminho especificado
-        if os.path.exists(caminho_arquivo):
-            # Lê o CSV usando pandas, especificando o ponto e vírgula como separador
-            df_curriculos = pd.read_csv(caminho_arquivo, sep=';')
-            st.dataframe(df_curriculos)
-        else:
-            st.error(f"Arquivo não encontrado no caminho: '{caminho_arquivo}'")
-            st.info("Verifique se a variável 'CAMINHO_ARQUIVO' no script está correta.")
-    except FileNotFoundError:
-        st.error(f"Arquivo não encontrado no caminho: '{caminho_arquivo}'")
-    except pd.errors.ParserError:
-        st.error(f"Erro ao processar o arquivo '{caminho_arquivo}'. Verifique o formato e o separador.")
+        curriculos.delete_one({"_id": ObjectId(opcoes[escolhido])})
+        st.success("Currículo apagado com sucesso!")
+        st.rerun()  # recarrega página atualizando a tabela
     except Exception as e:
-        st.error(f"Ocorreu um erro inesperado ao ler '{caminho_arquivo}': {e}")
+        st.error(f"Erro ao apagar currículo: {e}")
 
-if __name__ == "__main__":
-    st.title("Visualizador de Currículos")
-
-    
-    CAMINHO_ARQUIVO = "src\dataset\curriculos.csv" 
-
-    listar_curriculos(CAMINHO_ARQUIVO)

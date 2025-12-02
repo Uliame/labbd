@@ -1,31 +1,59 @@
 import streamlit as st
 import pandas as pd
-import os
+from connection_mongo import vagas
+from bson import ObjectId
 
-def listar_vagas(caminho_arquivo):
-    """
-    Lê o arquivo CSV de vagas a partir de um caminho fixo e o exibe.
-    """
-    st.header("Lista de Vagas")
+# ----------------------------
+# Botão voltar para a home
+# ----------------------------
+if st.button("Voltar para a Home"):
+    st.switch_page("app.py")
+
+
+st.title("Lista de Vagas Cadastradas")
+
+# ---------------------------
+# LISTA AS VAGAS DO BANCO
+# ---------------------------
+try:
+    documentos = list(vagas.find())
+except Exception as e:
+    st.error(f"Erro ao buscar vagas: {e}")
+    st.stop()
+
+if not documentos:
+    st.info("Nenhuma vaga encontrada no banco.")
+    st.stop()
+
+# Criar DataFrame
+df = pd.DataFrame(documentos)
+
+# Mostrar tabela com o ID visível
+df["_id"] = df["_id"].astype(str)
+st.dataframe(df)
+
+st.divider()
+
+# ---------------------------
+# ÁREA DE EXCLUSÃO
+# ---------------------------
+
+st.subheader("Excluir Vaga")
+
+opcoes = {
+    f"{d['titulo']} - {d['empresa']} ({d['_id']})": d["_id"]
+    for d in documentos
+}
+
+escolhida = st.selectbox(
+    "Selecione a vaga que deseja excluir:",
+    list(opcoes.keys())
+)
+
+if st.button("Apagar vaga"):
     try:
-        # Verifica se o arquivo existe no caminho especificado
-        if os.path.exists(caminho_arquivo):
-            # Lê o CSV usando pandas, especificando o ponto e vírgola como separador
-            df_vagas = pd.read_csv(caminho_arquivo, sep=';')
-            st.dataframe(df_vagas)
-        else:
-            st.error(f"Arquivo não encontrado no caminho: '{caminho_arquivo}'")
-            st.info("Verifique se a variável 'CAMINHO_ARQUIVO' no script está correta.")
-    except FileNotFoundError:
-        st.error(f"Arquivo não encontrado no caminho: '{caminho_arquivo}'")
-    except pd.errors.ParserError:
-        st.error(f"Erro ao processar o arquivo '{caminho_arquivo}'. Verifique o formato e o separador.")
+        vagas.delete_one({"_id": ObjectId(opcoes[escolhida])})
+        st.success("Vaga apagada com sucesso!")
+        st.rerun()  # recarrega página atualizando a tabela
     except Exception as e:
-        st.error(f"Ocorreu um erro inesperado ao ler '{caminho_arquivo}': {e}")
-
-if __name__ == "__main__":
-    st.title("Visualizador de Vagas")
-
-    CAMINHO_ARQUIVO = "src\dataset\vagas.csv"
-
-    listar_vagas(CAMINHO_ARQUIVO)
+        st.error(f"Erro ao apagar vaga: {e}")
